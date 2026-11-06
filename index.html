@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#070b16">
+<link rel="manifest" href="manifest.json">
+<title>Sam - Voice Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#0f1226;--panel:#181d3a;--panel2:#222850;--line:rgba(255,255,255,.08);--tx:#f3f1ea;--mu:#9aa0c4;--sf:#ffb02e;--lg:#3fe0c5;--bad:#ff7b7b}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--ink);color:var(--tx);font-family:Sora,system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+body{display:flex;flex-direction:column;padding-top:env(safe-area-inset-top);position:relative;overflow:hidden}
+body::before{content:"";position:fixed;left:50%;top:38%;width:520px;height:520px;margin:-260px 0 0 -260px;border-radius:50%;background:radial-gradient(circle,rgba(63,224,197,.14),transparent 65%);pointer-events:none}
+header{padding:16px 22px 0;display:flex;align-items:center;gap:10px;position:relative}
+.logo{font-weight:700;font-size:20px;letter-spacing:.2px}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--sf)}
+body.on .dot{background:var(--lg);box-shadow:0 0 0 5px rgba(63,224,197,.2)}
+main{flex:1;overflow-y:auto;padding:10px 22px 120px;position:relative}
+.page{display:none}.page.on{display:block}
+.greet{font-size:36px;font-weight:700;line-height:1.1;margin:18px 0 6px;overflow-wrap:anywhere}
+.tag{color:var(--mu);font-size:15px;line-height:1.5;max-width:30ch}
+.stage{display:flex;flex-direction:column-reverse;align-items:center;gap:22px;margin:30px 0 10px}
+#mic{position:relative;width:116px;height:116px;border-radius:50%;border:0;color:var(--ink);background:var(--sf);cursor:pointer;box-shadow:0 12px 40px rgba(255,176,46,.35);transition:background .3s,box-shadow .3s}
+#mic svg{width:44px;height:44px}
+#mic::before,#mic::after{content:"";position:absolute;inset:-8px;border-radius:50%;border:2px solid var(--lg);opacity:0}
+#mic.live{background:var(--lg);box-shadow:0 12px 40px rgba(63,224,197,.4)}
+#mic.live::before{animation:ring 2.2s infinite}#mic.live::after{animation:ring 2.2s 1.1s infinite}
+@keyframes ring{0%{transform:scale(.92);opacity:.7}100%{transform:scale(1.55);opacity:0}}
+#wave{display:flex;align-items:center;justify-content:center;gap:4px;height:84px;width:100%}
+#wave i{flex:1;max-width:9px;height:6px;border-radius:5px;background:linear-gradient(var(--sf),var(--lg));opacity:.3;transition:opacity .4s}
+#mic.live~#wave i{opacity:1;animation:bar var(--d) ease-in-out infinite alternate}
+@keyframes bar{from{height:8px}to{height:var(--h)}}
+#status{text-align:center;font-size:18px;font-weight:600;margin-top:12px}
+#sub{text-align:center;color:var(--mu);font-size:14px;margin-top:4px}
+.talk{margin:22px 0 8px;display:grid;gap:10px}
+.b{border-radius:18px;padding:12px 16px;max-width:88%;line-height:1.45}
+.b span{display:block;font-size:12px;color:var(--mu);margin-bottom:2px}
+.b p{margin:0;font-size:16px;min-height:22px;overflow-wrap:anywhere}
+.you{background:var(--panel);border:1px solid var(--line);border-bottom-left-radius:4px;justify-self:start}
+.sam{background:var(--panel2);border:1px solid rgba(63,224,197,.25);border-bottom-right-radius:4px;justify-self:end}
+.sam p{color:var(--lg)}
+.try{font-size:13px;color:var(--mu);margin:22px 0 8px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin:0 -22px;padding-left:22px;padding-right:22px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;background:transparent;border:1px solid rgba(255,255,255,.16);border-radius:999px;padding:9px 15px;font-size:13px;color:var(--tx)}
+h3{font-size:24px;margin:20px 0 4px}
+.lbl{font-size:13px;color:var(--mu);margin:16px 0 2px}
+input,select{width:100%;padding:14px 16px;margin:6px 0;border-radius:14px;border:1px solid var(--line);background:var(--panel);color:var(--tx);font:inherit;font-size:16px}
+input:focus,select:focus,.btn:focus-visible,#mic:focus-visible,nav button:focus-visible{outline:2px solid var(--lg);outline-offset:2px}
+select option{color:#000}
+.btn{width:100%;padding:15px;margin:8px 0;border:0;border-radius:14px;background:var(--sf);color:var(--ink);font:inherit;font-size:16px;font-weight:700}
+.btn.g{background:transparent;border:1px solid rgba(255,255,255,.18);color:var(--tx);font-weight:600}
+.row{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);padding:12px;border-radius:16px;margin:8px 0}
+.av{flex:none;width:42px;height:42px;border-radius:50%;background:var(--panel2);color:var(--sf);display:grid;place-items:center;font-weight:700}
+.row .t{flex:1;min-width:0}.row b{display:block;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row small{color:var(--mu)}
+.row button{background:none;color:var(--bad);border:0;padding:8px;font:inherit;font-size:14px}
+.sw{display:flex;justify-content:space-between;align-items:center;margin:16px 0;gap:12px}
+.sw input{width:auto;transform:scale(1.4);accent-color:var(--lg)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;margin:14px 0}
+nav{position:fixed;left:18px;right:18px;bottom:calc(14px + env(safe-area-inset-bottom));display:flex;background:rgba(34,40,80,.92);backdrop-filter:blur(14px);border:1px solid var(--line);border-radius:22px;padding:6px}
+nav button{flex:1;background:none;border:0;color:var(--mu);font:inherit;font-size:12px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px;border-radius:16px}
+nav button.on{color:var(--ink);background:var(--sf);font-weight:600}
+nav svg{width:22px;height:22px}
+#black{display:none;position:fixed;inset:0;background:#000;z-index:99;color:#2a2a2a;align-items:flex-end;justify-content:center;padding:30px;font-size:12px;text-align:center}
+#ask{position:fixed;inset:0;z-index:50;background:var(--ink);display:flex;flex-direction:column;justify-content:center;padding:28px}
+#ask h1{font-size:40px;line-height:1.1;margin:0 0 12px}
+#ask p{color:var(--mu);margin:0 0 22px;line-height:1.5}
+@media (prefers-reduced-motion:reduce){#mic.live::before,#mic.live::after,#mic.live~#wave i{animation:none}}
+</style>
+</head>
+<body>
+<div id="black">Screen is off (Sam is still listening). Say "Sam On" or tap the screen.</div>
+
+<div id="ask">
+  <h1>Hi, I am Sam.</h1>
+  <p>What should I call you? I will use your name every time we talk.</p>
+  <input id="nm" placeholder="Your name" autocomplete="off">
+  <button class="btn" id="go">Start</button>
+</div>
+
+<header><span class="dot"></span><div class="logo">Sam</div></header>
+
+<main>
+  <section class="page on" id="home">
+    <div class="greet" id="hi"></div>
+    <div class="tag">Say “Sam”, then tell me what to do.</div>
+    <div class="stage">
+      <button id="mic" aria-label="Start or stop Sam"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+      <div id="wave" aria-hidden="true"></div>
+    </div>
+    <div id="status">Tap to wake Sam</div>
+    <div id="sub">Then just say “Sam” anytime</div>
+    <div class="talk">
+      <div class="b you"><span>You</span><p id="heard">-</p></div>
+      <div class="b sam"><span>Sam</span><p id="reply"></p></div>
+    </div>
+    <div class="try">Say “Sam”, then…</div>
+    <div class="chips">
+      <span class="chip">Call Rudra</span><span class="chip">Call Rudra on speaker</span>
+      <span class="chip">Open YouTube Shorts</span><span class="chip">Open Tarak Mantra</span>
+      <span class="chip">Increase volume</span><span class="chip">Decrease volume</span><span class="chip">Off</span><span class="chip">On</span>
+    </div>
+  </section>
+
+  <section class="page" id="cts">
+    <h3>Contacts</h3><div class="lbl">Sam calls whoever you add here</div>
+    <input id="cn" placeholder="Name (you can add more: Rudra, रुद्र)">
+    <input id="cp" type="tel" placeholder="Phone number">
+    <button class="btn" id="add">Add contact</button>
+    <button class="btn g" id="imp">Choose from phone contacts</button>
+    <div id="list"></div>
+  </section>
+
+  <section class="page" id="set">
+    <h3>Settings</h3><div class="lbl">Your name</div>
+    <input id="sn" placeholder="Your name">
+    <div class="lbl">I speak to Sam in</div>
+    <select id="sl"><option value="en-IN">English (India)</option><option value="mr-IN">Marathi</option><option value="hi-IN">Hindi</option></select>
+    <div class="lbl">Sam replies in</div>
+    <select id="rl"><option value="mr">Marathi</option><option value="en">English</option></select>
+    <div class="sw"><span>Wake word "Sam" required</span><input type="checkbox" id="ww" checked></div>
+    <button class="btn" id="save">Save settings</button>
+    <button class="btn g" id="test">Test Sam's voice</button>
+    <div class="card"><div class="lbl">Voice found on this phone</div><div id="vn">-</div></div>
+  </section>
+</main>
+
+<nav>
+  <button class="on" data-p="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/></svg>Sam</button>
+  <button data-p="cts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Contacts</button>
+  <button data-p="set"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg>Settings</button>
+</nav>
+
+<script>
+const $=s=>document.querySelector(s);
+const ST={get(k,d){try{const v=localStorage.getItem(k);return v===null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+let name=ST.get('name',''),contacts=ST.get('contacts',[{n:'Rudra, रुद्र',p:'9112811453'}]);
+let S=ST.get('s',{sl:'en-IN',rl:'mr',ww:true});
+let vol=1,on=false,awaiting=false,speaking=false,rec=null,awaitTimer=null,lastErr='';
+
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('nav button,.page').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');$('#'+b.dataset.p).classList.add('on');
+});
+function head(){$('#hi').textContent=name?('Hi, '+name):'';document.body.classList.toggle('named',!!name);$('#ask').style.display=name?'none':'flex';$('#sn').value=name;$('#sl').value=S.sl;$('#rl').value=S.rl;$('#ww').checked=S.ww;}
+$('#go').onclick=()=>{const v=$('#nm').value.trim();if(!v)return;name=v;ST.set('name',v);head();};
+$('#save').onclick=()=>{name=$('#sn').value.trim()||name;S={sl:$('#sl').value,rl:$('#rl').value,ww:$('#ww').checked};ST.set('name',name);ST.set('s',S);head();if(on){stop();setTimeout(startRec,300);}alert('Saved');};
+head();
+
+function draw(){
+  $('#list').innerHTML='';
+  contacts.forEach((c,i)=>{
+    const d=document.createElement('div');d.className='row';
+    const av=document.createElement('div');av.className='av';av.textContent=(c.n.trim()[0]||'?').toUpperCase();const l=document.createElement('div');l.className='t';l.innerHTML='<b></b><small></small>';
+    l.querySelector('b').textContent=c.n;l.querySelector('small').textContent=c.p;
+    const b=document.createElement('button');b.textContent='Delete';
+    b.onclick=()=>{contacts.splice(i,1);ST.set('contacts',contacts);draw();};
+    d.append(av,l,b);$('#list').append(d);
+  });
+}
+$('#add').onclick=()=>{const n=$('#cn').value.trim(),p=$('#cp').value.trim();if(!n||!p)return;contacts.push({n,p});ST.set('contacts',contacts);$('#cn').value=$('#cp').value='';draw();};
+$('#imp').onclick=async()=>{
+  try{const r=await navigator.contacts.select(['name','tel'],{multiple:true});
+    r.forEach(c=>{if(c.name&&c.name[0]&&c.tel&&c.tel[0])contacts.push({n:c.name[0],p:c.tel[0]})});
+    ST.set('contacts',contacts);draw();
+  }catch(e){alert('This phone cannot open the contact picker. Please type name and number.');}
+};
+draw();
+
+const W=$('#wave');for(let i=0;i<27;i++){const s=document.createElement('i');s.style.setProperty('--d',(0.5+Math.random()*0.6).toFixed(2)+'s');s.style.setProperty('--h',(18+Math.round(Math.sin((i+.5)/27*Math.PI)*62))+'px');W.append(s);}
+/* ---------- Voice out ---------- */
+let voices=[];
+function loadV(){voices=speechSynthesis.getVoices();const v=pickVoice();$('#vn').textContent=v?(v.name+' ('+v.lang+')'):'Default phone voice';}
+if('speechSynthesis' in window){loadV();speechSynthesis.onvoiceschanged=loadV;}
+function pickVoice(){
+  const want=S.rl==='mr'?['mr','hi']:['en-IN','en'];
+  for(const w of want){
+    const p=voices.filter(v=>v.lang.toLowerCase().replace('_','-').startsWith(w.toLowerCase()));
+    if(p.length)return p.find(v=>/male/i.test(v.name)&&!/female/i.test(v.name))||p[0];
+  }
+  return null;
+}
+function say(t){
+  $('#reply').textContent=t;
+  return new Promise(res=>{
+    if(!('speechSynthesis' in window)){res();return;}
+    try{speechSynthesis.cancel();}catch(e){}
+    const u=new SpeechSynthesisUtterance(t),v=pickVoice();
+    if(v){u.voice=v;u.lang=v.lang}else u.lang=S.rl==='mr'?'mr-IN':'en-IN';
+    u.pitch=0.55;u.rate=0.95;u.volume=vol;
+    speaking=true;let done=false;
+    const fin=()=>{if(done)return;done=true;speaking=false;res();};
+    u.onend=fin;u.onerror=fin;
+    setTimeout(fin,2500+t.length*110); /* safety: never get stuck */
+    speechSynthesis.speak(u);
+  });
+}
+const T={
+ mr:{hello:()=>`Hello ${name}, मी तुमच्यासाठी काय करू शकतो?`,
+  call:(c,sp)=>`ठीक आहे ${name}, मी ${c} ला फोन लावतो.`+(sp?' फोन लागल्यावर स्पीकरचं बटण दाबा.':''),
+  nocontact:'हा कॉन्टॅक्ट मला सापडला नाही. कॉन्टॅक्ट्समध्ये आधी जोडा.',
+  shorts:'यूट्यूब शॉर्ट्स उघडतो.',yt:'यूट्यूब उघडतो.',search:q=>`${q} यूट्यूबवर शोधतो.`,
+  up:'आवाज वाढवला.',down:'आवाज कमी केला.',off:'ठीक आहे, स्क्रीन बंद करतो.',on:'स्क्रीन चालू केली.',
+  nope:()=>`माफ करा ${name}, मला समजलं नाही. पुन्हा सांगा.`},
+ en:{hello:()=>`Hello ${name}, what can I do for you?`,
+  call:(c,sp)=>`Okay ${name}, calling ${c}.`+(sp?' Press the speaker button once the call starts.':''),
+  nocontact:'I could not find that contact. Please add it in Contacts.',
+  shorts:'Opening YouTube Shorts.',yt:'Opening YouTube.',search:q=>`Searching ${q} on YouTube.`,
+  up:'Volume increased.',down:'Volume decreased.',off:'Turning the screen off.',on:'Screen is on.',
+  nope:()=>`Sorry ${name}, I did not understand. Please say it again.`}
+};
+
+/* ---------- Commands ---------- */
+function findContact(t){
+  for(const c of contacts){
+    const ns=c.n.split(/[,\/]/).map(x=>x.trim().toLowerCase()).filter(Boolean);
+    if(ns.some(n=>t.includes(n)))return c;
+  }
+  return null;
+}
+async function run(t){
+  const L=T[S.rl];t=t.toLowerCase().trim();
+  $('#heard').textContent=t;
+  const sp=/speaker|स्पीकर/.test(t);
+  if(/\b(call|dial|phone)\b|कॉल|फोन|फ़ोन/.test(t)){
+    let c=findContact(t);
+    if(!c){const m=t.match(/\d[\d\s-]{7,}/);if(m)c={n:m[0],p:m[0]};}
+    if(!c){await say(L.nocontact);return;}
+    await say(L.call(c.n.split(',')[0],sp));
+    location.href='tel:'+c.p.replace(/[^\d+]/g,'');return;
+  }
+  if(/short|शॉर्ट/.test(t)){await say(L.shorts);location.href='https://www.youtube.com/shorts';return;}
+  if(/increase|volume up|louder|raise|वाढव|आवाज वाढ/.test(t)){vol=Math.min(1,vol+.25);await say(L.up);return;}
+  if(/decrease|volume down|lower|reduce|कमी|हळू/.test(t)){vol=Math.max(.2,vol-.25);await say(L.down);return;}
+  if(/^(sam\s*)?(off|turn off|switch off|screen off|ऑफ|बंद)/.test(t)||/screen off|स्क्रीन बंद/.test(t)){await say(L.off);$('#black').style.display='flex';return;}
+  if(/^(sam\s*)?(on|turn on|screen on|ऑन|चालू)\W*$/.test(t)||/screen on|स्क्रीन चालू/.test(t)){$('#black').style.display='none';await say(L.on);return;}
+  let m=t.match(/(?:open|play|search|ओपन|उघड\S*)\s+(.+)/)||t.match(/(.+?)\s+(?:लाव\S*|उघड\S*|ओपन\s*करा?)$/);
+  if(m){
+    const q=m[1].replace(/you\s?tube|यूट्यूब|युट्यूब|\bon\b|वर/g,'').trim();
+    if(!q){await say(L.yt);location.href='https://www.youtube.com';return;}
+    await say(L.search(q));location.href='https://www.youtube.com/results?search_query='+encodeURIComponent(q);return;
+  }
+  await say(L.nope());
+}
+
+/* ---------- Listening ---------- */
+const WAKE=/(^|\s)(sam|sham|sem|som|sum|saam|samm|सॅम|सैम|सेम|साम|सम|शाम|सँम|सॅम्)(?=\s|$|[,.!?])/i;
+function startRec(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){$('#status').textContent='Voice not supported here';$('#sub').textContent='Open the app in Chrome and try again';return;}
+  rec=new SR();rec.lang=S.sl;rec.continuous=true;rec.interimResults=true;
+  rec.onresult=async e=>{
+    const r=e.results[e.results.length-1],t=r[0].transcript.trim();
+    if(speaking||!t)return;
+    $('#heard').textContent=t;
+    if(!r.isFinal)return;
+    const hasWake=WAKE.test(' '+t+' ');
+    if(S.ww&&!hasWake&&!awaiting)return;
+    const rest=t.replace(WAKE,' ').replace(/^[\s,.!?]+/,'').trim();
+    if(rest){awaiting=false;clearTimeout(awaitTimer);await run(rest);}
+    else{
+      awaiting=true;clearTimeout(awaitTimer);awaitTimer=setTimeout(()=>awaiting=false,15000);
+      $('#status').textContent='Yes? I am listening';await say(T[S.rl].hello());
+    }
+  };
+  rec.onerror=ev=>{
+    lastErr=ev.error;
+    if(ev.error==='not-allowed'||ev.error==='service-not-allowed'){on=false;stop();$('#status').textContent='Microphone permission denied';$('#sub').textContent='Allow Microphone in phone Settings > Apps > Sam > Permissions';}
+    else if(ev.error==='network'){$('#sub').textContent='Voice needs internet. Please check your connection';}
+  };
+  rec.onend=()=>{if(on)setTimeout(()=>{try{rec.start()}catch(e){}},250);};
+  try{rec.start()}catch(e){}
+}
+function stop(){on=false;document.body.classList.remove('on');awaiting=false;try{rec&&rec.abort()}catch(e){}$('#mic').classList.remove('live');$('#status').textContent='Tap to wake Sam';$('#sub').textContent='Then just say "Sam" anytime';}
+async function keepAwake(){try{await navigator.wakeLock.request('screen')}catch(e){}}
+document.addEventListener('visibilitychange',()=>{if(on&&document.visibilityState==='visible')keepAwake();});
+$('#mic').onclick=async()=>{
+  if(on){stop();return;}
+  try{const s=await navigator.mediaDevices.getUserMedia({audio:true});s.getTracks().forEach(t=>t.stop());}
+  catch(e){$('#status').textContent='Microphone permission needed';$('#sub').textContent='Please tap Allow when the phone asks';return;}
+  on=true;document.body.classList.add('on');$('#mic').classList.add('live');
+  $('#status').textContent='Listening... say "Sam"';
+  $('#sub').textContent=S.ww?'Say "Sam", then your command':'Just say your command';
+  keepAwake();startRec();
+  if('speechSynthesis' in window){const u=new SpeechSynthesisUtterance(' ');u.volume=0;speechSynthesis.speak(u);}
+};
+$('#test').onclick=()=>say(T[S.rl].hello());
+$('#black').onclick=()=>{$('#black').style.display='none';};
+/* auto-start when the mic permission was already given */
+async function boot(){
+  try{
+    const p=await navigator.permissions.query({name:'microphone'});
+    if(p.state==='granted'&&name){
+      on=true;document.body.classList.add('on');$('#mic').classList.add('live');
+      $('#status').textContent='Listening... say "Sam"';
+      $('#sub').textContent=S.ww?'Say "Sam", then your command':'Just say your command';
+      keepAwake();startRec();
+    }
+  }catch(e){}
+}
+boot();
+document.addEventListener('pointerdown',()=>{try{if('speechSynthesis' in window){const u=new SpeechSynthesisUtterance(' ');u.volume=0;speechSynthesis.speak(u);}}catch(e){}},{once:true});
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
